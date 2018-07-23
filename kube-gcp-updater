@@ -300,7 +300,6 @@ resume() {
     drain_node ${old_node}
   done
 
-  kill_old_nodes
 }
 
 echo "kube cluster: ${kube_context}"
