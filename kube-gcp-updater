@@ -282,7 +282,7 @@ cycle_nodes() {
     count=$(retry kubectl --context=${kube_context} get node -lrole=${role} -Lrole |\
       grep  ${role} |\
       wc -l)
-    echo "waiting kubelet to update nodes: actual=${count} expected=${igm_targetSize}"
+    echo "waiting kube controller to update nodes: actual=${count} expected=${igm_targetSize}"
   done
   set -e
 }
