@@ -93,6 +93,9 @@ if [[ -z "${gcp_project}" ]]; then
   exit 1
 fi
 
+# Verify we can successfully authenticate with Google
+gcloud projects describe "${gcp_project}"
+
 function fail() {
   echo $1 >&2
   exit 1
