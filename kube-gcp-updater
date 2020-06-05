@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Shell style guide: https://google.github.io/styleguide/shell.xml
 
@@ -60,6 +60,7 @@ deps="
   gcloud
   timeout
   xargs
+  readarray
 "
 
 missing_deps=""
