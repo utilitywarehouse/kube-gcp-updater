@@ -209,7 +209,7 @@ kill_old_nodes() {
   echo "-------------------------------------------------------------" 
 
   echo "Wait until ${instance_group_manager} is stable"
-  retry gcloud compute instance-groups managed wait-until-stable ${instance_group_manager} --region=${instance_region} --project=${gcp_project}
+  retry gcloud compute instance-groups managed wait-until --stable ${instance_group_manager} --region=${instance_region} --project=${gcp_project}
 
 }
 
