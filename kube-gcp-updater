@@ -22,6 +22,10 @@ set -o pipefail
 # Static vars
 LOG_FILE='kube-updater.log'
 
+# if there is no "hostname" command, try "hostnamectl hostname"
+hn=hostname
+command -v hostname || hn="hostnamectl hostname"
+
 readonly retire_time=$(date +"%Y-%m-%dT%H-%M-%SZ")
 
 # flags
@@ -112,7 +116,7 @@ if [[ -n "${promtail_cfg}" ]]; then
     exit 1
   fi
 
-  promtail --config.file="${promtail_cfg}" --client.external-labels=context="${kube_context}",host="$(hostname)" &
+  promtail --config.file="${promtail_cfg}" --client.external-labels=context="${kube_context}",host="$($hn)" &
   touch "${LOG_FILE}"
   sleep 2 # give promtail time to start
   exec &> >(tee "${LOG_FILE}") # redirect execution through tee
