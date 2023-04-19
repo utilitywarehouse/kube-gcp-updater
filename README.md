@@ -11,10 +11,15 @@ mv promtail-linux-amd64 promtail
 sudo chmod a+x promtail
 ```
 
+### macOS Install
+```
+brew install promtail
+```
+
 
 ### Usage
 
-To enable pushing logs to loki pass `-l` arg to the script along with the path to a valid promtail config file ie `./kube-merit-updater -c dev-merit -r master -n 3 -l promtail.conf`
+To enable pushing logs to loki pass `-l` arg to the script along with the path to a valid promtail config file ie `./kube-gcp-updater -c exp-1-gcp -r master -p uw-dev -l promtail.conf`
 
 This will run promtail as a background process within the context of the script which will gracefully terminate along with the script
 
