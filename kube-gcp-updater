@@ -104,6 +104,23 @@ if [[ -z "${gcp_project}" ]]; then
   exit 1
 fi
 
+pairs=("exp=dev" "dev=dev" "prod=prod")
+# Check if any pair matches
+match_found=false
+for pair in "${pairs[@]}"; do
+  IFS='=' read -r key value <<< "$pair"
+  if [[ "$kube_context" == "$key"* && "$gcp_project" == *"$value" ]]; then
+    match_found=true
+    break
+  fi
+done
+# Check the result
+if [ "$match_found" != true ]; then
+  echo "kube context '${kube_context}' and gcp project '${gcp_project}' mismatch"
+  usage
+  exit 1
+fi
+
 # Verify we can successfully authenticate with Google
 gcloud projects describe "${gcp_project}"
 
