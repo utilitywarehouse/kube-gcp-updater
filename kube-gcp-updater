@@ -23,8 +23,8 @@ set -o pipefail
 LOG_FILE='kube-updater.log'
 
 # if there is no "hostname" command, try "hostnamectl hostname"
-hn=hostname
-command -v hostname || hn="hostnamectl hostname"
+hostname_cmd=hostname
+command -v hostname || hostname_cmd="hostnamectl hostname"
 
 readonly retire_time=$(date +"%Y-%m-%dT%H-%M-%SZ")
 
@@ -93,6 +93,12 @@ if [[ -z "${kube_context}" ]]; then
   exit 1
 fi
 
+if ! [[ "${role}" == "master" || "${role}" == "worker" || -z "${role}" ]] ; then
+  echo "-r <role> must be 'master' or 'worker' or omitted (for both)"
+  usage
+  exit 1
+fi
+
 if [[ -n "${resume}" ]] && [[ -z "${role}" ]] ; then
   echo "If you are resuming, you need to provide a role"
   usage
@@ -116,7 +122,7 @@ if [[ -n "${promtail_cfg}" ]]; then
     exit 1
   fi
 
-  promtail --config.file="${promtail_cfg}" --client.external-labels=context="${kube_context}",host="$($hn)" &
+  promtail --config.file="${promtail_cfg}" --client.external-labels=context="${kube_context}",host="$($hostname_cmd)" &
   touch "${LOG_FILE}"
   sleep 2 # give promtail time to start
   exec &> >(tee "${LOG_FILE}") # redirect execution through tee
@@ -226,8 +232,8 @@ kill_old_nodes() {
   done
   set -e
 
-  local instance_group_manager=$(retry gcloud compute instances describe ${instance_id} --zone=${instance_zone} --project=${gcp_project} --format=json |\
-    jq -r '.metadata.items[] | select(.key=="created-by") | .value' | awk -F'[/]' '{print $NF}')
+  local instance_group_manager=$(basename $(retry gcloud compute instances describe ${instance_id} --zone=${instance_zone} --project=${gcp_project} --format=json |\
+    jq -r '.metadata.items[] | select(.key=="created-by") | .value'))
 
   echo "gcp terminating nodes: ${nodes_to_kill}"
   retry gcloud compute instance-groups managed delete-instances ${instance_group_manager} --instances=${nodes_to_kill} --region=${instance_region} --project=${gcp_project}
@@ -268,12 +274,15 @@ cycle_nodes() {
   done
   set -e
 
-  local instance_group_manager=$(retry gcloud compute instances describe ${instance_id} --zone=${instance_zone} --project=${gcp_project} --format=json |\
-    jq -r '.metadata.items[] | select(.key=="created-by") | .value' | awk -F'[/]' '{print $NF}')
+  local instance_group_manager=$(basename $(retry gcloud compute instances describe ${instance_id} --zone=${instance_zone} --project=${gcp_project} --format=json |\
+    jq -r '.metadata.items[] | select(.key=="created-by") | .value'))
 
   ## Assumes regional Instance Group Manager
   local igm_targetSize=$(retry gcloud compute instance-groups managed describe ${instance_group_manager} --region=${instance_region} --project=${gcp_project} --format=json |\
     jq -r .targetSize)
+  if ! [[ ${igm_targetSize} =~ ^[0-9]+$ ]] ; then
+    echo "error: '${igm_targetSize}' not a digit" >&2; exit 1
+  fi
 
   echo "-------------------------------------------------------------"
   echo "Doubling the size of group manager ${instance_group_manager}:"
